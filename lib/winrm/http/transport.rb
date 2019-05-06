@@ -298,6 +298,8 @@ module WinRM
         service ||= 'HTTP'
         @service = "#{service}/#{@endpoint.host}@#{realm}"
         no_ssl_peer_verification! if opts[:no_ssl_peer_verification]
+        # TODO: I think that when the response is 401, init_krb needs to be retried?
+        # send_request handles this, but init_krb doesn't seem to properly?
         init_krb
       end
 
@@ -307,6 +309,7 @@ module WinRM
       # @param [String] The XML SOAP message
       # @returns [REXML::Document] The parsed response body
       def send_request(message)
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
         resp = send_kerberos_request(message)
 
         if resp.status == 401
@@ -327,6 +330,7 @@ module WinRM
       # @param [String] The XML SOAP message
       # @returns [Object] The HTTP response object
       def send_kerberos_request(message)
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
         log_soap_message(message)
         original_length = message.bytesize
         pad_len, emsg = winrm_encrypt(message)
@@ -349,6 +353,9 @@ module WinRM
       def init_krb
         @logger.debug "Initializing Kerberos for #{@service}"
         @gsscli = GSSAPI::Simple.new(@endpoint.host, @service)
+        # TODO: this call is currently failing with GSS failure
+        # Cannot contact any KDC for realm 'BOLT.TEST'
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
         token = @gsscli.init_context
         auth = Base64.strict_encode64 token
 
@@ -359,9 +366,13 @@ module WinRM
         }
         @logger.debug 'Sending HTTP POST for Kerberos Authentication'
         r = @httpcli.post(@endpoint, '', hdr)
+        # TODO: when the HTTP status code is not 200, cannot proceed
+        # look at the other code that retries on 401
+        # at the very least HTTP 401 should propagate better!
         itok = r.header['WWW-Authenticate'].pop
         itok = itok.split.last
         itok = Base64.strict_decode64(itok)
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
         @gsscli.init_context(itok)
       end
 
@@ -393,6 +404,9 @@ module WinRM
         conf_state = FFI::MemoryPointer.new :uint32
         min_stat = FFI::MemoryPointer.new :uint32
 
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
+        # OSX Kerberos libraries don't seem to fill the buffer properly with gss_wrap_iov
+        # or perhaps the @gsscli.context is busted?
         GSSAPI::LibGSSAPI.gss_wrap_iov(
           min_stat,
           @gsscli.context,
@@ -413,6 +427,8 @@ module WinRM
 
       # @return [String] the unencrypted response string
       def winrm_decrypt(str)
+        # TODO: this code is pretty sloppy, so fix it!
+        require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
         @logger.debug "Decrypting SOAP message:\n#{str}"
         iov_cnt = 3
         iov = FFI::MemoryPointer.new(GSSAPI::LibGSSAPI::GssIOVBufferDesc.size * iov_cnt)
@@ -448,6 +464,8 @@ module WinRM
         maj_stat = GSSAPI::LibGSSAPI.gss_unwrap_iov(
           min_stat, @gsscli.context, conf_state, qop_state, iov, iov_cnt
         )
+
+        # TODO: when maj_stat is 0, that's supposed to be a fail, right??
 
         @logger.debug "SOAP message decrypted (MAJ: #{maj_stat}, " \
           "MIN: #{min_stat.read_int}):\n#{iov1[:buffer].value}"
