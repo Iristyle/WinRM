@@ -67,6 +67,8 @@ module WinRM
           "#{NS_ADDRESSING}:Action" => 'http://schemas.xmlsoap.org/ws/2004/09/transfer/Create',
           :attributes! => {
             "#{NS_ADDRESSING}:Action" => {
+              # TODO: hmmm... should this also have a namespace? like this:
+              # "#{NS_SOAP_ENV}:mustUnderstand" => 'true'
               'mustUnderstand' => true
             }
           }
@@ -86,7 +88,7 @@ module WinRM
           },
           :attributes! => {
             "#{NS_WSMAN_DMTF}:OptionSet" => {
-              'env:mustUnderstand' => 'true'
+              "#{NS_SOAP_ENV}:mustUnderstand" => 'true'
             }
           }
         }

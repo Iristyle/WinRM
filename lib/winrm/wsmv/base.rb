@@ -29,11 +29,12 @@ module WinRM
       def build
         builder = Builder::XmlMarkup.new
         builder.instruct!(:xml, encoding: 'UTF-8')
-        builder.tag! :env, :Envelope, namespaces do |env|
-          env.tag!(:env, :Header) do |env_header|
+        # TODO: changed :env to :s here
+        builder.tag! :s, :Envelope, namespaces do |env|
+          env.tag!(:s, :Header) do |env_header|
             create_header(env_header)
           end
-          env.tag!(:env, :Body) do |env_body|
+          env.tag!(:s, :Body) do |env_body|
             create_body(env_body)
           end
         end

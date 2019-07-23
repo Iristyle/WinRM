@@ -33,7 +33,7 @@ module WinRM
         @namespaces ||= {
           'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
           'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-          'xmlns:env' => 'http://www.w3.org/2003/05/soap-envelope',
+          "xmlns:#{NS_SOAP_ENV}" => 'http://www.w3.org/2003/05/soap-envelope',
           "xmlns:#{NS_ADDRESSING}" => 'http://schemas.xmlsoap.org/ws/2004/08/addressing',
           "xmlns:#{NS_CIMBINDING}" => 'http://schemas.dmtf.org/wbem/wsman/1/cimbinding.xsd',
           "xmlns:#{NS_ENUM}" => 'http://schemas.xmlsoap.org/ws/2004/09/enumeration',
