@@ -39,6 +39,9 @@ module WinRM
             shell_id: shell_id,
             shell_uri: WinRM::WSMV::Header::RESOURCE_URI_POWERSHELL
           )
+          # TODO: this call is failing because OMI server doesn't like it
+          # this seems to impact all clients including pwsh itself
+          require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
           transport.send_request(msg.build)
         end
       end

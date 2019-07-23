@@ -41,6 +41,8 @@ module WinRM
         begin
           yield shell
         ensure
+          # TODO: it looks like the close call is failing here?
+          require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
           shell.close
         end
       else

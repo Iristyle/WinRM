@@ -113,6 +113,8 @@ module WinRM
         "//*[local-name() = 'Reason']/*[local-name() = 'Text']/text()"
       )
 
+      # TODO: helping to diagnose the connection close crash
+      require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true' && (code.nil? || subcode.nil? || reason.nil?)
       raise WinRMSoapFault.new(code, subcode, reason) unless
         code.nil? && subcode.nil? && reason.nil?
     end

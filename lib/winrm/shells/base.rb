@@ -77,6 +77,7 @@ module WinRM
       # @yieldreturn [WinRM::Output] The command output
       def run(command, arguments = [], &block)
         with_command_shell(command, arguments) do |shell, cmd|
+          require 'pry'; binding.pry if ENV['KRB_DEBUGGING'] == 'true'
           response_reader.read_output(command_output_message(shell, cmd), &block)
         end
       end
